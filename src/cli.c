@@ -69,10 +69,32 @@ static int parse_probability(const char *text, double *value)
   errno = 0;
   parsed = strtod(text, &end);
   if (errno == ERANGE || end == text || *end != '\0' ||
-      !isfinite(parsed) || parsed < 0.0 || parsed > 1.0) {
+      !isfinite(parsed) || parsed < 0.0 || parsed > 0.5) {
     return 0;
   }
   *value = parsed;
+  return 1;
+}
+
+static int valid_session(const char *session)
+{
+  size_t length;
+  size_t index;
+
+  if (session == NULL) {
+    return 0;
+  }
+  length = strlen(session);
+  if (length < 1U || length > 32U) {
+    return 0;
+  }
+  for (index = 0U; index < length; ++index) {
+    if (!((session[index] >= 'a' && session[index] <= 'z') ||
+          (session[index] >= '0' && session[index] <= '9') ||
+          session[index] == '-')) {
+      return 0;
+    }
+  }
   return 1;
 }
 
@@ -146,7 +168,7 @@ cli_parse_result parse_cli(int argc, char *argv[], cli_options *options,
       if (options->mode != TRANSFER_SEND ||
           !parse_probability(optarg, &options->loss)) {
         return invalid(error, error_size,
-                       "Loss probability must be from 0 to 1 and is only "
+                       "Loss probability must be from 0 to 0.5 and is only "
                        "valid for send.");
       }
       break;
@@ -154,7 +176,7 @@ cli_parse_result parse_cli(int argc, char *argv[], cli_options *options,
       if (options->mode != TRANSFER_SEND ||
           !parse_probability(optarg, &options->corrupt)) {
         return invalid(error, error_size,
-                       "Corruption probability must be from 0 to 1 and is "
+                       "Corruption probability must be from 0 to 0.5 and is "
                        "only valid for send.");
       }
       break;
@@ -162,7 +184,7 @@ cli_parse_result parse_cli(int argc, char *argv[], cli_options *options,
       if (options->mode != TRANSFER_SEND ||
           !parse_probability(optarg, &options->duplicate)) {
         return invalid(error, error_size,
-                       "Duplication probability must be from 0 to 1 and is "
+                       "Duplication probability must be from 0 to 0.5 and is "
                        "only valid for send.");
       }
       break;
@@ -178,8 +200,9 @@ cli_parse_result parse_cli(int argc, char *argv[], cli_options *options,
     }
   }
 
-  if (options->session == NULL || options->session[0] == '\0') {
-    return invalid(error, error_size, "A non-empty session is required.");
+  if (!valid_session(options->session)) {
+    return invalid(error, error_size,
+                   "Session must be 1 to 32 characters from a-z, 0-9, and -.");
   }
   if (option_argc - optind != 2) {
     return invalid(error, error_size,

@@ -1,4 +1,5 @@
 #include "cli.h"
+#include "transfer.h"
 
 #include <stdio.h>
 
@@ -30,7 +31,13 @@ int main(int argc, char *argv[])
         return 2;
     }
 
-    (void)fprintf(stderr, "Transfer protocol is not implemented yet.\n");
+    if (options.mode == TRANSFER_RECEIVE) {
+        int status = receive_transfer(&options);
+        free_cli_options(&options);
+        return status;
+    }
+
+    (void)fprintf(stderr, "Sender is not implemented yet.\n");
     free_cli_options(&options);
     return 2;
 }
