@@ -1,6 +1,6 @@
-#include "lab.h"
+#include "cli.h"
+
 #include <stdio.h>
-#include <stdlib.h>
 
 #ifdef TEST
 #define main main_exclude
@@ -8,14 +8,29 @@
 
 
 
-int main(void)
+int main(int argc, char *argv[])
 {
-    char *greeting = get_greeting("World");
-    if (greeting) {
-        printf("%s\n", greeting);
-        free(greeting); // Free the allocated memory for the greeting
-    } else {
-        printf("Failed to create greeting.\n");
+    cli_options options;
+    char error[256];
+    cli_parse_result result;
+
+    if (argc == 1) {
+        print_usage(stdout);
+        return 0;
     }
-    return 0;
+
+    result = parse_cli(argc, argv, &options, error, sizeof(error));
+    if (result == CLI_PARSE_INVALID) {
+        (void)fprintf(stderr, "%s\n", error);
+        print_usage(stderr);
+        return 1;
+    }
+    if (result == CLI_PARSE_RESOLUTION_ERROR) {
+        (void)fprintf(stderr, "%s\n", error);
+        return 2;
+    }
+
+    (void)fprintf(stderr, "Transfer protocol is not implemented yet.\n");
+    free_cli_options(&options);
+    return 2;
 }
