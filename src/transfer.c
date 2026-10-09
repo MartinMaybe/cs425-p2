@@ -2,6 +2,7 @@
 
 #include "transfer.h"
 
+#include "file_packets.h"
 #include "gbn.h"
 #include "packet.h"
 
@@ -18,8 +19,6 @@
 
 #define REGISTRATION_ATTEMPTS 5
 #define REGISTRATION_TIMEOUT_MS 1000
-#define MAX_FILE_SIZE (16U * 1024U * 1024U)
-
 typedef struct {
   transfer_packet *packets;
   size_t count;
@@ -359,8 +358,7 @@ static int register_sender(int fd, const cli_options *options)
 static int load_packets(const char *path, packet_list *list)
 {
   FILE *input;
-  size_t capacity = 0U;
-  size_t total_bytes = 0U;
+  file_packets_result result;
 
   memset(list, 0, sizeof(*list));
   input = fopen(path, "rb");
@@ -370,59 +368,22 @@ static int load_packets(const char *path, packet_list *list)
     return 0;
   }
 
-  for (;;) {
-    transfer_packet packet;
-    size_t count;
-    transfer_packet *grown;
-
-    memset(&packet, 0, sizeof(packet));
-    packet.type = PACKET_DATA;
-    count = fread(packet.payload, 1U, PACKET_MAX_PAYLOAD, input);
-    if (count == 0U) {
-      if (ferror(input)) {
-        (void)fprintf(stderr, "Could not read input file '%s': %s\n",
-                      path, strerror(errno));
-        (void)fclose(input);
-        free(list->packets);
-        memset(list, 0, sizeof(*list));
-        return 0;
-      }
-      break;
-    }
-    if (total_bytes > (size_t)MAX_FILE_SIZE - count) {
-      (void)fprintf(stderr, "Input file exceeds the 16 MiB transfer limit.\n");
-      (void)fclose(input);
-      free(list->packets);
-      memset(list, 0, sizeof(*list));
-      return 0;
-    }
-    total_bytes += count;
-    if (list->count == capacity) {
-      size_t next_capacity = capacity == 0U ? 16U : capacity * 2U;
-      if (next_capacity > (size_t)MAX_FILE_SIZE / PACKET_MAX_PAYLOAD) {
-        next_capacity = (size_t)MAX_FILE_SIZE / PACKET_MAX_PAYLOAD;
-      }
-      grown = realloc(list->packets, next_capacity * sizeof(*list->packets));
-      if (grown == NULL) {
-        (void)fprintf(stderr, "Could not allocate packet buffer.\n");
-        (void)fclose(input);
-        free(list->packets);
-        memset(list, 0, sizeof(*list));
-        return 0;
-      }
-      list->packets = grown;
-      capacity = next_capacity;
-    }
-
-    packet.seq = (uint32_t)list->count;
-    packet.length = (uint16_t)count;
-    list->packets[list->count] = packet;
-    ++list->count;
-  }
-
+  result = file_packets_read(input, &list->packets, &list->count);
   if (fclose(input) != 0) {
     (void)fprintf(stderr, "Could not close input file '%s': %s\n",
                   path, strerror(errno));
+    free(list->packets);
+    memset(list, 0, sizeof(*list));
+    return 0;
+  }
+  if (result != FILE_PACKETS_OK) {
+    if (result == FILE_PACKETS_TOO_LARGE) {
+      (void)fprintf(stderr, "Input file exceeds the 16 MiB transfer limit.\n");
+    } else if (result == FILE_PACKETS_NO_MEMORY) {
+      (void)fprintf(stderr, "Could not allocate packet buffer.\n");
+    } else {
+      (void)fprintf(stderr, "Could not read input file '%s'.\n", path);
+    }
     free(list->packets);
     memset(list, 0, sizeof(*list));
     return 0;
