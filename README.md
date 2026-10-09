@@ -20,3 +20,15 @@ analysis, you can remove this section.
 Here is an example of how to include a plot in your README:
 
 ![Example Image](scripts/example_plot.png)
+
+## Transfer implementation
+
+The protocol is split into three layers:
+
+- `src/packet.c` encodes and validates wire packets without I/O.
+- `src/gbn.c` implements sender and receiver state machines. Events take
+  explicit millisecond timestamps and return packet, payload, completion, and
+  timer actions.
+- `src/transfer.c` handles files, relay registration, UDP, polling, and the
+  monotonic clock, and applies actions from the state machines.
+

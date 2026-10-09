@@ -37,7 +37,9 @@ int main(int argc, char *argv[])
         return status;
     }
 
-    (void)fprintf(stderr, "Sender is not implemented yet.\n");
-    free_cli_options(&options);
-    return 2;
+    {
+        int status = send_transfer(&options);
+        free_cli_options(&options);
+        return status;
+    }
 }
