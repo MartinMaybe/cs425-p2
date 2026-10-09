@@ -9,12 +9,8 @@ static void clear_actions(gbn_actions *actions)
 
 static void add_packet(gbn_actions *actions, const transfer_packet *packet)
 {
-  if (actions->packet_count < GBN_MAX_ACTION_PACKETS) {
-    actions->packets[actions->packet_count] = *packet;
-    ++actions->packet_count;
-  } else {
-    actions->failed = 1;
-  }
+  actions->packets[actions->packet_count] = *packet;
+  ++actions->packet_count;
 }
 
 static void set_sender_timer(gbn_sender *sender, int64_t now_ms,

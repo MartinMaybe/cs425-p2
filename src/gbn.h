@@ -8,7 +8,9 @@
 
 #define GBN_MAX_WINDOW 64U
 #define GBN_MAX_ACTION_PACKETS (GBN_MAX_WINDOW + 1U)
+#ifndef GBN_RECEIVE_IDLE_MS
 #define GBN_RECEIVE_IDLE_MS INT64_C(30000)
+#endif
 #define GBN_FIN_LINGER_MS INT64_C(2000)
 
 typedef struct {

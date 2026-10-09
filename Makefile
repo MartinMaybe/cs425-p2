@@ -28,7 +28,8 @@ else ifeq ($(BUILD),debug)
   BUILD_DIR := $(BUILD_BASE_DIR)/debug
   TARGET ?= $(BUILD_DIR)/$(APP_NAME)_d
 else ifeq ($(BUILD),test)
-  CFLAGS := -g -O0 -DTEST -fprofile-arcs -ftest-coverage
+  # Short test-only idle deadline keeps receiver I/O timeout coverage fast.
+  CFLAGS := -g -O0 -DTEST -DGBN_RECEIVE_IDLE_MS=1000 -fprofile-arcs -ftest-coverage
   LDFLAGS += -fprofile-arcs -ftest-coverage
   BUILD_DIR := $(BUILD_BASE_DIR)/tests
   TEST_TARGET ?= $(BUILD_DIR)/$(APP_NAME)_t
