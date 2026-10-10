@@ -1,27 +1,27 @@
-# Project X
+# P2 - Reliable Data Transfer 
 
-- Name: John Doe
-- Email: johndoe@u.boisestate.edu
-- Class: CS123-001
+- Name: Martin Gonzalez
+- Email: martingonzalez@u.boisestate.edu
+- Class: CS425-001
 
 ## Known Bugs or Issues
 
-TODO: Are there any known issues?
+No known bugs or issues.
 
 ## Experience
 
-TODO: Describe your experience with the project (struggles, breakthroughs, etc.).
+One of the most challenging parts of this project was getting Go-Back-N
+retransmission and acknowledgments right when packets were lost, corrupted, 
+or duplicated. Being able the sender and receiver recover from damaged traffic 
+in those tests and then transfer files successfully through the relay was a
+big breakthrough for me. 
 
-## Analysis
+Testing everything was really difficult, but seperating the protocol state machines 
+from network and file I/O made a huge difference in testing. Copilot was a major
+help in creating tests, especially for edge cases like empty files, repeated FIN 
+packets, and retransmitting the full unacknowledged window after a timeout.
 
-TODO: Provide your analysis of the results. If the assignment does not require
-analysis, you can remove this section.
-
-Here is an example of how to include a plot in your README:
-
-![Example Image](scripts/example_plot.png)
-
-## Transfer implementation
+## Design
 
 The protocol is split into three layers:
 
